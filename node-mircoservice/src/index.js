@@ -9,7 +9,7 @@ const upload = multer({storage: memoryStorage()})
 
 //Application config
 const app = express()
-const port = 3000
+const port = process.env.SERVER_PORT
 const jsonParser = bodyParser.json()
 app.use(jsonParser)
 app.use(cors({
@@ -42,10 +42,12 @@ app.get('/getImage', cors(), (req, res) => {
         function getImage(eId) {
             return new Promise((resolve, reject) => {
                 connection.query(`SELECT (pictureData)
-                                  FROM EncounterImages_T
+                                  FROM encounter_image_t
                                   WHERE encounterId = ?;`, [eId], (err, results) => {
                     if (err != null) return reject(err)
-                    resolve(results[0].pictureData)
+                    if(results[0] != undefined)
+                        resolve(results[0].pictureData)
+                    else resolve(null)
                     //fs.writeFileSync('get.png', results[0].pictureData)
                     //resolve(Object.values(JSON.parse(JSON.stringify(results))))
                 })
@@ -53,8 +55,8 @@ app.get('/getImage', cors(), (req, res) => {
         }
 
         getImage(inputEncounterId).then(result => {
-            console.log("Res = ")
-            console.log({result}, result.length)
+            //console.log("Res = ")
+            //console.log({result}, result.length)
             res.send({result})
 
 
@@ -86,21 +88,21 @@ app.post('/putImage', cors(), upload.single('blob'), (req, res) => {
 
     function putImage(eId, file) {
         return new Promise((resolve, reject) => {
-            connection.query("SELECT (id) FROM EncounterImages_T WHERE encounterId = ?;", [eId], (err, results) => {
+            connection.query("SELECT (id) FROM encounter_image_t WHERE encounterId = ?;", [eId], (err, results) => {
                 if (err != null) return reject(err)
 
                 if (results.length != 0) {
                     //UPDATE
                     let id = results[0].id
                     //Tog bort BINARY() runt picturedata på båda
-                    connection.query("UPDATE EncounterImages_T SET pictureData = ? WHERE id = ?", [req.file.buffer, id], (err, results, fields) => {
+                    connection.query("UPDATE encounter_image_t SET pictureData = ? WHERE id = ?", [req.file.buffer, id], (err, results, fields) => {
                         if (err != null) return reject(err)
                         resolve('Successfully updated image!')
                     })
 
                 } else {
                     //INSERT
-                    connection.query("INSERT INTO EncounterImages_T (encounterId, pictureData) VALUES(?,?)", [eId, req.file.buffer], (err, results, fields) => {
+                    connection.query("INSERT INTO encounter_image_t (encounterId, pictureData) VALUES(?,?)", [eId, req.file.buffer], (err, results, fields) => {
                         if (err != null) return reject(err)
                         resolve('Successfully inserted image!')
                     })
@@ -126,12 +128,12 @@ app.listen(port, jsonParser, () => {
 
     function testConn(){
         return new Promise((resolve, reject) => {
-            connection.query(`SHOW TABLES LIKE "EncounterImages_T";`, [], (err, results) => {
+            connection.query(`SHOW TABLES LIKE "encounter_image_t";`, [], (err, results) => {
                 if(err != null) return reject(err)
 
                 let res =Object.values(JSON.parse(JSON.stringify(results)))
                 if(res.length == 0){
-                    connection.query("CREATE TABLE EncounterImages_T(ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT, encounterId INT NOT NULL, pictureData BLOB);", [], (err, results) => {
+                    connection.query("CREATE TABLE encounter_image_t(ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT, encounterId INT NOT NULL, pictureData BLOB);", [], (err, results) => {
                         if(err != null) return reject(err)
                         resolve('Table set up')
                     })
