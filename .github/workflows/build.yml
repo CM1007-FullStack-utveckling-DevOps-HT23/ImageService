@@ -17,7 +17,7 @@ jobs:
         run: npm install
 
       - name: Build
-        run: npm run build --if-present
+        run: npm run build ./node-mircoservice --if-present
 
       - name: Testing
         run: npm test --if-present
