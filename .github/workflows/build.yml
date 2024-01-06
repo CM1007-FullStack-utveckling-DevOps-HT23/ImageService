@@ -1,0 +1,13 @@
+name: image-service-build
+run-name: ${{ github.actor }} - image-service-build
+on: [ push]
+jobs:
+  build-node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20.10.0'
+      - run: npm install
+      - run: node ../../node-mircoservice/src/index.js
