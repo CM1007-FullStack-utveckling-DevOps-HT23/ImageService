@@ -1,13 +1,23 @@
-name: image-service-build
-run-name: ${{ github.actor }} - image-service-build
+name: image-service-build-test-deploy
+run-name: ${{ github.actor }} - image-service-build-test-deploy
 on: [ push]
 jobs:
-  build-node:
+  build-test-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v3
         with:
           node-version: '14'
-      - run: npm install
-      - run: node ./node-mircoservice/src/index.js
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build --if-present
+
+      - name: Testing
+        run: npm test --if-present
