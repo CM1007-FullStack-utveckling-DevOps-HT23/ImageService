@@ -1,4 +1,5 @@
 const express = require('express')
+require('dotenv').config();
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const multer = require('multer')
@@ -6,6 +7,9 @@ const {memoryStorage} = require("multer");
 const fs = require('fs')
 const upload = multer({storage: memoryStorage()})
 //Used to be const upload = multer({storage: memoryStorage()};
+
+const jwksUri = process.env.JWKS_URI;
+
 
 //Application config
 const app = express()
@@ -18,6 +22,60 @@ app.use(cors({
 
 }))
 
+//Used to validate JWT
+const jwt = require('jsonwebtoken');
+const jwksClient = require('jwks-rsa');
+
+// Function to get Keycloak public key from JWKS
+function getKey(header, callback) {
+    const client = jwksClient({ jwksUri });
+
+    client.getSigningKey(header.kid, (err, key) => {
+        if (err) {
+            console.error('Error retrieving key:', err);
+            return callback(err);
+        }
+
+        const signingKey = key && (key.publicKey || key.rsaPublicKey);
+        if (!signingKey) {
+            console.error('Invalid key format:', key);
+            return callback(new Error('Invalid key format'));
+        }
+
+        callback(null, signingKey);
+    });
+}
+
+function verifyAccessToken(token) {
+    return new Promise((resolve, reject) => {
+        jwt.verify(token, getKey, (err, decoded) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(decoded);
+            }
+        });
+    });
+}
+
+// Middleware to authenticate token
+async function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+        return res.sendStatus(401);
+    }
+
+    try {
+        const decoded = await verifyAccessToken(token);
+        req.user = decoded;
+        next();
+    } catch (error) {
+        return res.status(403).json({ error: error.message });
+    }
+}
+
 //MySQL
 const mysql = require('mysql2')
 const {dbConfig} = require("./dbConfig");
@@ -27,7 +85,7 @@ connection.connect()
 
 console.log("Starting up!")
 
-app.get('/getImage', cors(), (req, res) => {
+app.get('/getImage', cors(), authenticateToken, (req, res) => {
     //res.header("Access-Control-Allow-Origin", "*");
     let encounterId = req.query.encounterId != null ? req.query.encounterId : null;
 
@@ -74,7 +132,7 @@ app.get('/getImage', cors(), (req, res) => {
 
 })
 
-app.post('/putImage', cors(), upload.single('blob'), (req, res) => {
+app.post('/putImage', cors(), authenticateToken, upload.single('blob'), (req, res) => {
 
     console.log("Multer data: ")
     console.log(req.body)

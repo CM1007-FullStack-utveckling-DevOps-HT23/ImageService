@@ -15,6 +15,9 @@ RUN npm install
 # Copying all the files in our project
 COPY . .
 
+# Bypassing SSL certificate verification
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+
 ENV SERVER_PORT 5000
 
 # Exposing server port
