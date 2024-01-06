@@ -10,4 +10,4 @@ jobs:
         with:
           node-version: '14'
       - run: npm install
-      - run: node ../../node-mircoservice/src/index.js 
+      - run: node ../../node-mircoservice/src/index.js
