@@ -39,7 +39,7 @@ jobs:
       - name: Build Docker Image
         uses: docker/build-push-action@v2
         with:
-          context: ./node-mircoservice
-          file: ./node-mircoservice/Dockerfile
+          context: ./ImageService/node-mircoservice
+          file: ./ImageService/node-mircoservice/Dockerfile
           push: true
           tags: docker.io/devve00/patient_journal_test:image_service
