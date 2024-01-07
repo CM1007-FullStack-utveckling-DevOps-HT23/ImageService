@@ -18,7 +18,7 @@ jobs:
 
       - name: Build
         run: |
-          cd ./node-microservice
+          cd ./node-mircoservice
           npm build
 
       - name: Testing
