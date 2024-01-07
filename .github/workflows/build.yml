@@ -22,7 +22,9 @@ jobs:
           npm build
 
       - name: Testing
-        run: npm test
+        run: |    
+          cd ./node-mircoservice
+          npm test
 
   deploy:
     needs: [build-test]
