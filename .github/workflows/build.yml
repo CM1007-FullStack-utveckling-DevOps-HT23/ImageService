@@ -2,7 +2,7 @@ name: image-service-build-test-deploy
 run-name: ${{ github.actor }} - image-service-build-test-deploy
 on: [ push]
 jobs:
-  build-test:
+  build-test-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,10 +26,6 @@ jobs:
           cd ./node-mircoservice
           npm test
 
-  deploy:
-    needs: [build-test]
-    runs-on: ubuntu-latest
-    steps:
       - name: Log in to Docker Hub
         uses: docker/login-action@v1
         with:
@@ -39,7 +35,7 @@ jobs:
       - name: Build Docker Image
         uses: docker/build-push-action@v2
         with:
-          context: .
+          context: ./node-mircoservice
           file: ./node-mircoservice/Dockerfile
           push: true
           tags: docker.io/devve00/patient_journal_test:image_service
